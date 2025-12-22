@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { createDateIcon, createDateElement } from './dom';
+import { createDateIcon, createDateElement } from '../dom';
 
 describe('dom utilities', () => {
   beforeEach(() => {

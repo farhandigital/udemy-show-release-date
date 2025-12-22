@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { fetchCourseCreationDate, getCourseId, formatDateString } from './udemy-api';
+import { fetchCourseCreationDate, getCourseId, formatDateString } from '../udemy-api';
 
 describe('Udemy API utilities', () => {
   beforeEach(() => {
