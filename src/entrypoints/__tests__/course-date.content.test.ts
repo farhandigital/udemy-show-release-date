@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import courseDate from './course-date.content';
+import courseDate from '../course-date.content';
 
 // Mock the WXT utilities
 vi.mock('wxt/utils/content-script-ui/integrated', () => ({
@@ -7,13 +7,13 @@ vi.mock('wxt/utils/content-script-ui/integrated', () => ({
 }));
 
 // Mock the utility functions
-vi.mock('../utils/udemy-api', () => ({
+vi.mock('../../utils/udemy-api', () => ({
   getCourseId: vi.fn(),
   fetchCourseCreationDate: vi.fn(),
   formatDateString: vi.fn(),
 }));
 
-vi.mock('../utils/dom', () => ({
+vi.mock('../../utils/dom', () => ({
   createDateElement: vi.fn(),
 }));
 
@@ -22,8 +22,8 @@ import {
   getCourseId,
   fetchCourseCreationDate,
   formatDateString,
-} from '../utils/udemy-api';
-import { createDateElement } from '../utils/dom';
+} from '../../utils/udemy-api';
+import { createDateElement } from '../../utils/dom';
 
 describe('course-date content script', () => {
   let mockAutoMount: ReturnType<typeof vi.fn>;
