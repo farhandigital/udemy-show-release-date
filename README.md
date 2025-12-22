@@ -4,11 +4,11 @@
 [![License](https://img.shields.io/badge/license-MPL--2.0-green)](https://mozilla.org/MPL/2.0/)
 [![Test Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/yourusername/udemy-show-release-date)
 
-A browser extension that displays the release date of Udemy courses directly on the course page.
+A browser extension that displays the creation date of Udemy courses directly on the course page.
 
 Currently, Udemy primarily shows `Last Updated` metadata on the course page. This can be misleading because Udemy doesn't show what has been updated exactly. The author can simply make a minimal edit such as fixing a typo in one of the lectures, or replacing the intro video with the current year mention.
 
-With this extension, an extra metadata, release date, will be added to the course page right beside the `Last Updated` metadata.
+With this extension, an extra metadata, `Created`, will be added to the course page right beside the `Last Updated` metadata.
 
 ## 🎯 Features
 
