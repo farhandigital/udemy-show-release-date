@@ -2,7 +2,7 @@
   "name": "udemy-show-release-date",
   "description": "A browser extension to show the release date of Udemy courses",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "wxt",
