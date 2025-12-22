@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import courseDate from '../course-date.content';
+import type { ContentScriptContext } from '#imports';
 
 // Mock the WXT utilities
 vi.mock('wxt/utils/content-script-ui/integrated', () => ({
@@ -28,35 +29,44 @@ import { createDateElement } from '../../utils/dom';
 describe('course-date content script', () => {
   let mockAutoMount: ReturnType<typeof vi.fn>;
   let mockOnMount: ((container: HTMLElement) => void) | undefined;
-  let mockContext: any;
+  let mockContext: ContentScriptContext;
 
   beforeEach(() => {
     vi.clearAllMocks();
     document.body.innerHTML = '';
 
-    // Setup mock context
-    mockContext = {};
+    // Setup mock context with required properties
+    mockContext = {
+      contentScriptName: 'course-date',
+      isTopFrame: true,
+      abortController: new AbortController(),
+      locationWatcher: null,
+    } as unknown as ContentScriptContext;
 
     // Setup mock autoMount
     mockAutoMount = vi.fn();
 
     // Setup mock createIntegratedUi to capture onMount callback
-    (createIntegratedUi as any).mockImplementation((ctx, options) => {
+    vi.mocked(createIntegratedUi).mockImplementation((ctx, options) => {
       mockOnMount = options.onMount;
       return {
         autoMount: mockAutoMount,
+        wrapper: document.createElement('div'),
+        mounted: false,
+        mount: vi.fn(),
+        remove: vi.fn(),
       };
     });
 
     // Setup default mock implementations
-    (getCourseId as any).mockReturnValue(null);
-    (fetchCourseCreationDate as any).mockResolvedValue('2021-04-15T12:00:00Z');
-    (formatDateString as any).mockReturnValue('4/2021');
-    (createDateElement as any).mockReturnValue(document.createElement('div'));
+    vi.mocked(getCourseId).mockReturnValue(null);
+    vi.mocked(fetchCourseCreationDate).mockResolvedValue('2021-04-15T12:00:00Z');
+    vi.mocked(formatDateString).mockReturnValue('4/2021');
+    vi.mocked(createDateElement).mockReturnValue(document.createElement('div'));
   });
 
   it('should return early if no course ID is found', async () => {
-    (getCourseId as any).mockReturnValue(null);
+    vi.mocked(getCourseId).mockReturnValue(null);
 
     await courseDate.main(mockContext);
 
@@ -65,7 +75,7 @@ describe('course-date content script', () => {
 
   it('should fetch course creation date when course ID exists', async () => {
     const courseId = '12345';
-    (getCourseId as any).mockReturnValue(courseId);
+    vi.mocked(getCourseId).mockReturnValue(courseId);
 
     await courseDate.main(mockContext);
 
@@ -75,8 +85,8 @@ describe('course-date content script', () => {
   it('should format the date string', async () => {
     const courseId = '12345';
     const rawDate = '2021-04-15T12:00:00Z';
-    (getCourseId as any).mockReturnValue(courseId);
-    (fetchCourseCreationDate as any).mockResolvedValue(rawDate);
+    vi.mocked(getCourseId).mockReturnValue(courseId);
+    vi.mocked(fetchCourseCreationDate).mockResolvedValue(rawDate);
 
     await courseDate.main(mockContext);
 
@@ -84,7 +94,7 @@ describe('course-date content script', () => {
   });
 
   it('should create integrated UI with correct options', async () => {
-    (getCourseId as any).mockReturnValue('12345');
+    vi.mocked(getCourseId).mockReturnValue('12345');
 
     await courseDate.main(mockContext);
 
@@ -99,7 +109,7 @@ describe('course-date content script', () => {
   });
 
   it('should call autoMount on the UI', async () => {
-    (getCourseId as any).mockReturnValue('12345');
+    vi.mocked(getCourseId).mockReturnValue('12345');
 
     await courseDate.main(mockContext);
 
@@ -107,9 +117,9 @@ describe('course-date content script', () => {
   });
 
   it('should call onMount with correct container setup', async () => {
-    (getCourseId as any).mockReturnValue('12345');
+    vi.mocked(getCourseId).mockReturnValue('12345');
     const mockDateElement = document.createElement('div');
-    (createDateElement as any).mockReturnValue(mockDateElement);
+    vi.mocked(createDateElement).mockReturnValue(mockDateElement);
 
     await courseDate.main(mockContext);
 
@@ -124,8 +134,8 @@ describe('course-date content script', () => {
   it('should create date element with formatted date', async () => {
     const courseId = '12345';
     const formattedDate = '4/2021';
-    (getCourseId as any).mockReturnValue(courseId);
-    (formatDateString as any).mockReturnValue(formattedDate);
+    vi.mocked(getCourseId).mockReturnValue(courseId);
+    vi.mocked(formatDateString).mockReturnValue(formattedDate);
 
     await courseDate.main(mockContext);
 
@@ -141,12 +151,12 @@ describe('course-date content script', () => {
     const rawDate = '2023-06-20T14:30:00Z';
     const formattedDate = '6/2023';
 
-    (getCourseId as any).mockReturnValue(courseId);
-    (fetchCourseCreationDate as any).mockResolvedValue(rawDate);
-    (formatDateString as any).mockReturnValue(formattedDate);
+    vi.mocked(getCourseId).mockReturnValue(courseId);
+    vi.mocked(fetchCourseCreationDate).mockResolvedValue(rawDate);
+    vi.mocked(formatDateString).mockReturnValue(formattedDate);
 
     const mockDateElement = document.createElement('div');
-    (createDateElement as any).mockReturnValue(mockDateElement);
+    vi.mocked(createDateElement).mockReturnValue(mockDateElement);
 
     await courseDate.main(mockContext);
 
