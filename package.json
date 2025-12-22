@@ -19,12 +19,12 @@
   },
   "devDependencies": {
     "@types/jsdom": "^27.0.0",
-    "@vitest/coverage-v8": "^1.6.0",
+    "@vitest/coverage-v8": "^4.0.16",
     "@vitest/ui": "^1.6.0",
     "@wxt-dev/auto-icons": "^1.1.0",
     "jsdom": "^27.3.0",
     "typescript": "^5.9.3",
-    "vitest": "^1.6.0",
+    "vitest": "^4.0.16",
     "wxt": "^0.20.6"
   }
 }
