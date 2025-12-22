@@ -1,11 +1,11 @@
-import { defineContentScript, createIntegratedUi } from '#imports';
+import { defineContentScript, createIntegratedUi, ContentScriptContext } from '#imports';
 import { getCourseId, fetchCourseCreationDate, formatDateString } from '../utils/udemy-api';
 import { createDateElement } from '../utils/dom';
 
 export default defineContentScript({
   matches: ['*://www.udemy.com/course/*'],
 
-  async main(ctx) {
+  async main(ctx: ContentScriptContext) {
     // 1. Get Course ID from the DOM
     const courseId = getCourseId();
     if (!courseId) return;
@@ -20,7 +20,7 @@ export default defineContentScript({
       anchor: '.clp-lead__element-meta',
       append: 'first',
 
-      onMount: (container) => {
+      onMount: (container: HTMLElement) => {
         // Create the date element
         const dateElement = createDateElement(dateString);
 
