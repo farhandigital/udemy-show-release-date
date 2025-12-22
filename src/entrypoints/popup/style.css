@@ -22,7 +22,8 @@
 body {
   margin: 0;
   background-color: #ffffff;
-  min-width: 420px;
+  min-width: 320px;
+  max-width: 380px;
 }
 
 #app {
@@ -31,24 +32,24 @@ body {
 }
 
 .container {
-  padding: 1.5rem;
+  padding: 1.25rem;
 }
 
 h1 {
-  margin: 0 0 1.5rem 0;
-  font-size: 1.5em;
+  margin: 0 0 1rem 0;
+  font-size: 1.4em;
   color: #1f2937;
   text-align: center;
 }
 
 .info {
-  font-size: 0.95em;
-  color: #555;
+  font-size: 1.05em;
+  color: #444;
 }
 
 .info p {
-  margin: 1rem 0;
-  line-height: 1.5;
+  margin: 0;
+  line-height: 1.6;
 }
 
 .info strong {
