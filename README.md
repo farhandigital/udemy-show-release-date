@@ -1,8 +1,8 @@
 # Udemy Show Release Date
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue)](https://github.com/yourusername/udemy-show-release-date)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue)](https://github.com/InvictusNavarchus/udemy-show-release-date)
 [![License](https://img.shields.io/badge/license-MPL--2.0-green)](https://mozilla.org/MPL/2.0/)
-[![Test Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/yourusername/udemy-show-release-date)
+[![Test Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/InvictusNavarchus/udemy-show-release-date)
 
 A browser extension that displays the release date of Udemy courses directly on the course page.
 
