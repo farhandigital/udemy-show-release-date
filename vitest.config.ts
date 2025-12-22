@@ -5,5 +5,9 @@ export default defineConfig({
   plugins: [WxtVitest()],
   test: {
     environment: 'jsdom',
+    coverage: {
+      provider: 'v8',
+      exclude: ['.wxt', 'wxt.config.ts', 'vitest.config.ts'],
+    },
   },
 });
