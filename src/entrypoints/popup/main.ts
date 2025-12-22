@@ -1,24 +1,22 @@
 import './style.css';
-import typescriptLogo from '@/assets/typescript.svg';
-import wxtLogo from '/wxt.svg';
-import { setupCounter } from '@/components/counter';
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-  <div>
-    <a href="https://wxt.dev" target="_blank">
-      <img src="${wxtLogo}" class="logo" alt="WXT logo" />
-    </a>
-    <a href="https://www.typescriptlang.org/" target="_blank">
-      <img src="${typescriptLogo}" class="logo vanilla" alt="TypeScript logo" />
-    </a>
-    <h1>WXT + TypeScript</h1>
-    <div class="card">
-      <button id="counter" type="button"></button>
+  <div class="container">
+    <h1>Udemy Show Release Date</h1>
+    <div class="info">
+      <p><strong>📚 What does this extension do?</strong></p>
+      <p>This browser extension automatically displays the course release date on Udemy course pages. When you browse Udemy courses, you'll see the original release date of each course right in the interface.</p>
+      
+      <p><strong>✨ Features</strong></p>
+      <ul>
+        <li>Shows course release dates on Udemy course pages</li>
+        <li>Seamlessly integrated into the course information</li>
+        <li>Works with Udemy's API for accurate dates</li>
+        <li>Lightweight and fast</li>
+      </ul>
+      
+      <p><strong>🚀 How to use</strong></p>
+      <p>Simply browse any Udemy course page, and the release date will automatically appear alongside the course details.</p>
     </div>
-    <p class="read-the-docs">
-      Click on the WXT and TypeScript logos to learn more
-    </p>
   </div>
 `;
-
-setupCounter(document.querySelector<HTMLButtonElement>('#counter')!);
