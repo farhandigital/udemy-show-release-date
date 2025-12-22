@@ -25,15 +25,48 @@ With this extension, an extra metadata, release date, will be added to the cours
 3. The creation/release date is extracted and formatted (Month/Year format)
 4. The date is injected into the course metadata section for easy visibility
 
-## 🚀 Getting Started
+## � Installation
+
+> [!IMPORTANT]
+> Chrome/Edge and Firefox: Not yet available on official extension stores. Use the manual installation steps below.
+
+<details>
+<summary>Click for manual installation instructions</summary>
+
+### Download from GitHub Releases
+
+#### For Google Chrome/Edge:
+
+1. Download the latest Chrome extension package from [GitHub Releases](https://github.com/InvictusNavarchus/udemy-show-release-date/releases/latest)
+2. Extract the downloaded ZIP file to a folder on your computer.
+3. Open Chrome/Edge and navigate to `chrome://extensions/`.
+4. Enable **Developer mode** (toggle in the top right).
+5. Click on **Load unpacked**.
+6. Select the extracted folder containing the extension files.
+
+#### For Mozilla Firefox:
+
+1. Download the latest Firefox extension package from [GitHub Releases](https://github.com/InvictusNavarchus/udemy-show-release-date/releases/latest)
+2. Extract the downloaded ZIP file to a folder on your computer.
+3. Open Firefox and navigate to `about:debugging#/runtime/this-firefox`.
+4. Click on **Load Temporary Add-on...**.
+5. Select the `manifest.json` file located inside the extracted folder.
+
+The extension icon should now appear in your browser's toolbar.
+
+</details>
+
+## � Development
+
+<details>
+<summary>Click to see setup instructions and development guide</summary>
 
 ### Prerequisites
 
 - [Bun](https://bun.sh/) - JavaScript runtime and package manager
 - Node.js 22+ (if not using Bun)
-- A modern browser (Chrome, Edge, or Firefox)
 
-### Installation
+### Setup
 
 1. **Clone the repository**
    ```bash
@@ -55,8 +88,6 @@ With this extension, an extra metadata, release date, will be added to the cours
    ```bash
    bun run dev:firefox
    ```
-
-## 🔧 Development
 
 ### Project Structure
 
@@ -113,12 +144,14 @@ Always check for type errors when making changes:
 bun run compile
 ```
 
-## 🏗️ Tech Stack
+### Technology Stack
 
 - **Language**: TypeScript 5.9+
 - **Framework**: [WXT](https://wxt.dev/) 0.20.6+
 - **Testing**: Vitest 4.0.16+ with jsdom
 - **Runtime & Package Manager**: Bun 1.3.1+
+
+</details>
 
 ## 📦 Architecture
 
