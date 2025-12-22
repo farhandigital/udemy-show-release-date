@@ -25,7 +25,7 @@ With this extension, an extra metadata, `Created`, will be added to the course p
 3. The release date is extracted and formatted (Month/Year format)
 4. The date is injected into the course metadata section for easy visibility
 
-## � Installation
+## 📥 Installation
 
 > [!IMPORTANT]
 > Chrome/Edge and Firefox: Not yet available on official extension stores. Use the manual installation steps below.
@@ -56,7 +56,7 @@ The extension icon should now appear in your browser's toolbar.
 
 </details>
 
-## � Development
+## 🛠️ Development
 
 <details>
 <summary>Click to see setup instructions and development guide</summary>
