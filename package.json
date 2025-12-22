@@ -12,11 +12,17 @@
     "zip": "wxt zip",
     "zip:firefox": "wxt zip -b firefox",
     "compile": "tsc --noEmit",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
     "postinstall": "wxt prepare"
   },
   "devDependencies": {
+    "@types/jsdom": "^27.0.0",
+    "@vitest/ui": "^1.6.0",
     "@wxt-dev/auto-icons": "^1.1.0",
+    "jsdom": "^27.3.0",
     "typescript": "^5.9.3",
+    "vitest": "^1.6.0",
     "wxt": "^0.20.6"
   }
 }
