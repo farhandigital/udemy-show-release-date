@@ -8,7 +8,7 @@ export default defineConfig({
     browser_specific_settings: {
       gecko: {
         id: "udemy-show-release-date@InvictusNavarchus",
-        // @ts-expect-error - data_collection_permissions is valid Firefox manifest setting
+        // @ts-expect-error - data_collection_permissions is a valid Firefox manifest setting, but currently unsupported by WXT types
         data_collection_permissions: {
           "required": ["none"]
         },
