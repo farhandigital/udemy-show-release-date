@@ -12,7 +12,7 @@ export default defineConfig({
         data_collection_permissions: {
           "required": ["none"]
         },
-        strict_min_version: "109.0", // MV3 support started in Firefox 109
+        strict_min_version: "142.0", // data_collection_permissions is introduced and required as of v140, Nov 2025 (v142 for Android)
       }
     }
   }
