@@ -47,6 +47,18 @@ export function createDateElement(dateString: string): HTMLDivElement {
   innerContent.appendChild(svg);
   innerContent.appendChild(textSpan);
   wrapper.appendChild(innerContent);
-
   return wrapper;
+}
+
+/**
+ * Creates the date element for a lecture item
+ * @param dateString - The formatted date string
+ * @returns The span element containing the date
+ */
+export function createLectureDateElement(dateString: string): HTMLSpanElement {
+  const span = document.createElement('span');
+  span.className = 'ud-text-xs ud-text-neutral';
+  span.style.marginRight = '1rem';
+  span.textContent = `(${dateString})`;
+  return span;
 }
