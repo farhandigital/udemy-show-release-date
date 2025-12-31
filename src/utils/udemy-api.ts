@@ -44,9 +44,12 @@ interface CurriculumResponse {
  * @returns A list of curriculum items
  */
 export async function fetchCurriculumItems(courseId: string): Promise<CurriculumItem[]> {
-  // We fetch chapter,lecture,quiz,practice to ensure we have the full sequence for matching
-  // But we might only care about lectures for dates.
-  let url: string | null = `https://www.udemy.com/api-2.0/courses/${courseId}/subscriber-curriculum-items/?curriculum_types=lecture,quiz,practice,chapter&page_size=1000&fields[lecture]=title,created,sort_order,type&fields[quiz]=title,sort_order,type&fields[practice]=title,sort_order&fields[chapter]=title,sort_order`;
+  // We fetch all curriculum types to ensure we have the full sequence for matching
+  // Request 'title,is_published,sort_order,created' for all relevant types
+  const fields = 'title,is_published,sort_order,created';
+  const types = 'chapter,lecture,quiz,practice,asset';
+
+  let url: string | null = `https://www.udemy.com/api-2.0/courses/${courseId}/subscriber-curriculum-items/?curriculum_types=${types}&page_size=1000&fields[lecture]=${fields}&fields[quiz]=${fields}&fields[practice]=${fields}&fields[chapter]=${fields}&fields[asset]=${fields}`;
   const allResults: CurriculumItem[] = [];
 
   while (url) {
