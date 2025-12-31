@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { fetchCourseCreationDate, getCourseId, formatDateString } from '../udemy-api';
+import { fetchCourseCreationDate, getCourseId, formatDateString, fetchCurriculumItems } from '../udemy-api';
 
 describe('Udemy API utilities', () => {
   beforeEach(() => {
@@ -175,4 +175,73 @@ describe('Udemy API utilities', () => {
       expect(result).toBe(mockResponse.created);
     });
   });
+  describe('fetchCurriculumItems', () => {
+    it('should fetch curriculum items and handle pagination', async () => {
+      const courseId = '12345';
+      const page1Response = {
+        count: 3,
+        next: 'https://www.udemy.com/api-2.0/test-next',
+        previous: null,
+        results: [
+          { _class: 'lecture', id: 1, title: 'L1', created: '2023-01-01', sort_order: 10 },
+        ],
+      };
+      const page2Response = {
+        count: 3,
+        next: null,
+        previous: '...',
+        results: [
+          { _class: 'lecture', id: 2, title: 'L2', created: '2023-01-02', sort_order: 20 }, // Higher sort order
+          { _class: 'quiz', id: 3, title: 'Q1', sort_order: 5 },
+        ],
+      };
+
+      // Mock fetch sequence
+      global.fetch = vi.fn()
+        .mockResolvedValueOnce({
+          json: () => Promise.resolve(page1Response),
+        } as Response)
+        .mockResolvedValueOnce({
+          json: () => Promise.resolve(page2Response),
+        } as Response);
+
+      const results = await fetchCurriculumItems(courseId);
+
+      // Verify URL calls
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(global.fetch).toHaveBeenNthCalledWith(1,
+        expect.stringContaining(`courses/${courseId}/subscriber-curriculum-items/`),
+        expect.any(Object)
+      );
+      expect(global.fetch).toHaveBeenNthCalledWith(2,
+        'https://www.udemy.com/api-2.0/test-next',
+        expect.any(Object)
+      );
+
+      // Verify sorting (Desc sort_order: 20 -> 10 -> 5)
+      expect(results).toHaveLength(3);
+      expect(results[0].id).toBe(2); // sort_order 20
+      expect(results[1].id).toBe(1); // sort_order 10
+      expect(results[2].id).toBe(3); // sort_order 5
+    });
+
+    it('should include all required curriculum types in request', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        json: () => Promise.resolve({
+          next: null,
+          results: []
+        })
+      } as Response);
+
+      await fetchCurriculumItems('100');
+
+      // Check for curriculum_types parameter
+      // The implementation uses specific list: chapter,lecture,quiz,practice,asset
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('curriculum_types='),
+        expect.any(Object)
+      );
+    });
+  });
 });
+

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { createDateIcon, createDateElement } from '../dom';
+import { createDateIcon, createDateElement, createLectureDateElement } from '../dom';
 
 describe('dom utilities', () => {
   beforeEach(() => {
@@ -88,6 +88,23 @@ describe('dom utilities', () => {
         const span = element.querySelector('span');
         expect(span?.textContent).toBe(`Created ${date}`);
       });
+    });
+  });
+  describe('createLectureDateElement', () => {
+    it('should create a span element with correct classes', () => {
+      const el = createLectureDateElement('1/2023');
+      expect(el.tagName.toLowerCase()).toBe('span');
+      expect(el.className).toBe('ud-text-xs ud-text-neutral');
+    });
+
+    it('should have correct text content', () => {
+      const el = createLectureDateElement('7/2022');
+      expect(el.textContent).toBe('(7/2022)');
+    });
+
+    it('should have margin style', () => {
+      const el = createLectureDateElement('1/2023');
+      expect(el.style.marginRight).toBe('1rem');
     });
   });
 });
