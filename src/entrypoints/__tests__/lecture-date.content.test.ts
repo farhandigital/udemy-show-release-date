@@ -254,4 +254,33 @@ describe('lecture-date content script', () => {
         expect(item1.querySelector('.mock-date-element')).not.toBeNull();
         expect(item2.querySelector('.mock-date-element')).not.toBeNull();
     });
+    it('should handle fetch errors gracefully', async () => {
+        vi.mocked(fetchCurriculumItems).mockRejectedValue(new Error('Network error'));
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+
+        await lectureDateContent.main(mockContext);
+
+        expect(consoleSpy).toHaveBeenCalledWith('Failed to fetch curriculum', expect.any(Error));
+        expect(createLectureDateElement).not.toHaveBeenCalled();
+    });
+
+    it('should strictly cover the injection inside recovery block', async () => {
+        // DOM: item1 (Title: "Offset Match")
+        // API: itemA (Title: "Mismatch"), itemB (Title: "Offset Match")
+
+        const item1 = createMockDomItem('Offset Match');
+        document.body.appendChild(item1);
+
+        const mockItems = [
+            { _class: 'lecture', id: 1, title: 'Mismatch', created: '2023-01-01', sort_order: 10 },
+            { _class: 'lecture', id: 2, title: 'Offset Match', created: '2023-02-01', sort_order: 5 }
+        ];
+        vi.mocked(fetchCurriculumItems).mockResolvedValue(mockItems);
+
+        await lectureDateContent.main(mockContext);
+        vi.advanceTimersByTime(150);
+
+        expect(createLectureDateElement).toHaveBeenCalledWith('2/2023');
+        expect(item1.dataset.wxtDateInjected).toBe('true');
+    });
 });
