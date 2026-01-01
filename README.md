@@ -41,7 +41,7 @@ Install directly from [Firefox Add-ons (AMO)](https://addons.mozilla.org/en-US/f
 <details>
 <summary>Click for manual installation instructions</summary>
 
-1. Download the latest Chrome extension package from [GitHub Releases](https://github.com/InvictusNavarchus/udemy-show-release-date/releases/latest)
+1. Download the latest Chrome extension package from [GitHub Releases](https://github.com/farhandigital/udemy-show-release-date/releases/latest)
 2. Extract the downloaded ZIP file to a folder on your computer.
 3. Open Chrome/Edge and navigate to `chrome://extensions/`.
 4. Enable **Developer mode** (toggle in the top right).
