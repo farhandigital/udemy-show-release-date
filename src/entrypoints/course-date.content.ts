@@ -17,7 +17,7 @@ export default defineContentScript({
     // 3. Create the UI
     const ui = createIntegratedUi(ctx, {
       position: 'inline',
-      anchor: '.clp-lead__element-meta',
+      anchor: '[class*="last-updated-languages-container"]',
       append: 'first',
 
       onMount: (container: HTMLElement) => {

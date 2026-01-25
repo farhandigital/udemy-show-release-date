@@ -106,7 +106,7 @@ describe('course-date content script', () => {
         mockContext,
         expect.objectContaining({
           position: 'inline',
-          anchor: '.clp-lead__element-meta',
+          anchor: '[class*="last-updated-languages-container"]',
           append: 'first',
         })
       );
@@ -136,7 +136,7 @@ describe('course-date content script', () => {
 
       // Verify it's configured to inject at the correct location
       const createUiCall = vi.mocked(createIntegratedUi).mock.calls[0];
-      expect(createUiCall[1].anchor).toBe('.clp-lead__element-meta');
+      expect(createUiCall[1].anchor).toBe('[class*="last-updated-languages-container"]');
       expect(createUiCall[1].append).toBe('first'); // Should appear first in the meta section
       expect(createUiCall[1].position).toBe('inline'); // Should be inline with existing elements
     });
