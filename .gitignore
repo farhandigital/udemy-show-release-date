@@ -27,3 +27,6 @@ web-ext.config.ts
 
 # Vitest
 coverage/
+
+# html sample for dev & testing purposes
+html-samples/
