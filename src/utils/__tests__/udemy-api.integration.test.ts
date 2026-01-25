@@ -15,10 +15,14 @@ import { fetchCourseCreationDate } from '../udemy-api';
 const REAL_COURSE_ID = '851712';
 
 describe('Udemy API Integration', () => {
-  it('should return course creation date in expected format', async () => {
-    const creationDate = await fetchCourseCreationDate(REAL_COURSE_ID);
+    it('Should return course creation date in a valid date format', async () => {
+      const creationDate = await fetchCourseCreationDate(REAL_COURSE_ID);
+      const date = new Date(creationDate);
+      expect(date.getTime()).not.toBeNaN();
+    }, 10000);
 
-    // Verify API returns a string in ISO date format
+    it('should return course creation date in ISO format', async () => {
+    const creationDate = await fetchCourseCreationDate(REAL_COURSE_ID);
     expect(typeof creationDate).toBe('string');
     expect(creationDate).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
   }, 10000);
