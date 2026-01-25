@@ -40,8 +40,8 @@ function injectDates(allCurriculumItems: CurriculumItem[]) {
 
     // Find all DOM elements that represent a curriculum item content.
     // The common factor for all content items is they are children of .ud-unstyled-list inside a panel.
-    // They usually have a title element with [data-testid="course-lecture-title"].
-    const domTitleElements = document.querySelectorAll('[data-testid="course-lecture-title"]');
+    // New structure uses CSS module classes: curriculum-section-module-scss-module__*__course-lecture-title
+    const domTitleElements = document.querySelectorAll('[class*="__course-lecture-title"]');
 
     // Map DOM title elements to their parent container
     const domItems = Array.from(domTitleElements).map(titleEl => {
@@ -75,7 +75,7 @@ function injectDates(allCurriculumItems: CurriculumItem[]) {
                 // Find insertion point
                 const contentContainer = domItem.element.querySelector('.ud-block-list-item-content');
                 if (contentContainer) {
-                    const row = contentContainer.querySelector('div[class*="section--row"]');
+                    const row = contentContainer.querySelector('div[class*="__row"]');
                     if (row) {
                         row.appendChild(dateEl);
                         domItem.element.dataset.wxtDateInjected = 'true';
@@ -107,7 +107,7 @@ function injectDates(allCurriculumItems: CurriculumItem[]) {
                     const dateEl = createLectureDateElement(dateString);
                     const contentContainer = domItem.element.querySelector('.ud-block-list-item-content');
                     if (contentContainer) {
-                        const row = contentContainer.querySelector('div[class*="section--row"]');
+                        const row = contentContainer.querySelector('div[class*="__row"]');
                         if (row) {
                             row.appendChild(dateEl);
                             domItem.element.dataset.wxtDateInjected = 'true';
