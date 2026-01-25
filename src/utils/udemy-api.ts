@@ -83,20 +83,17 @@ export function getCourseId(): string | null {
     return bodyAttribute;
   }
 
-  // Method 2: Extract from report abuse link
-  const reportLink = document.querySelector<HTMLAnchorElement>('a[data-purpose="report-abuse-link"]');
-  console.log('Method 2 (report link found):', !!reportLink, reportLink?.href);
-  if (reportLink?.href) {
-    try {
-      const url = new URL(reportLink.href, window.location.origin);
-      const courseId = url.searchParams.get('related_object_id');
-      console.log('Method 2 (extracted ID):', courseId);
-      if (courseId) {
-        console.log('Found ID via Method 2:', courseId);
-        return courseId;
-      }
-    } catch (e) {
-      console.error('Method 2 (URL parse error):', e);
+  // Method 2: Extract from meta tag image URL
+  const metaImage = document.querySelector<HTMLMetaElement>('meta[name="image"]');
+  console.log('Method 2 (meta image found):', !!metaImage);
+  if (metaImage?.content) {
+    console.log('Method 2 (meta image content):', metaImage.content);
+    // Extract course ID from image URL pattern: /course/480x270/2015076_2944_8.jpg
+    const match = metaImage.content.match(/\/course\/\d+x\d+\/(\d+)_/);
+    console.log('Method 2 (image match):', match);
+    if (match?.[1]) {
+      console.log('Found ID via Method 2:', match[1]);
+      return match[1];
     }
   }
 
@@ -126,9 +123,18 @@ export function getCourseId(): string | null {
     }
   }
 
-  // Method 4: Extract from URL path (less reliable as a last resort)
-  // This won't give us the numeric ID, but could be useful for debugging
-  // For now, we'll skip this as we need the numeric ID for the API
+  // Method 4: Extract from Open Graph meta tag
+  const ogImage = document.querySelector<HTMLMetaElement>('meta[property="og:image"]');
+  console.log('Method 4 (og:image found):', !!ogImage);
+  if (ogImage?.content) {
+    console.log('Method 4 (og:image content):', ogImage.content);
+    const match = ogImage.content.match(/\/course\/\d+x\d+\/(\d+)_/);
+    console.log('Method 4 (image match):', match);
+    if (match?.[1]) {
+      console.log('Found ID via Method 4:', match[1]);
+      return match[1];
+    }
+  }
   
   console.warn('All methods failed to find course ID');
   return null;
