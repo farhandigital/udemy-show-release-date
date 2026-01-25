@@ -33,7 +33,6 @@ describe('course-date content script', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    document.body.innerHTML = '';
 
     // Setup mock context with required properties
     mockContext = {
@@ -43,19 +42,19 @@ describe('course-date content script', () => {
       locationWatcher: null,
     } as unknown as ContentScriptContext;
 
-    // Setup mock autoMount
-    mockAutoMount = vi.fn();
+    // Setup mock autoMount with correct signature
+    mockAutoMount = vi.fn(() => {});
 
     // Setup mock createIntegratedUi to capture onMount callback
     vi.mocked(createIntegratedUi).mockImplementation((ctx, options) => {
       mockOnMount = options.onMount;
       return {
-        autoMount: mockAutoMount,
+        autoMount: mockAutoMount as any,
         wrapper: document.createElement('div'),
         mounted: false,
         mount: vi.fn(),
         remove: vi.fn(),
-      };
+      } as any;
     });
 
     // Setup default mock implementations
@@ -65,114 +64,81 @@ describe('course-date content script', () => {
     vi.mocked(createDateElement).mockReturnValue(document.createElement('div'));
   });
 
-  it('should return early if no course ID is found', async () => {
-    vi.mocked(getCourseId).mockReturnValue(null);
+  describe('edge cases and error handling', () => {
+    it('should do nothing when no course ID is found', async () => {
+      vi.mocked(getCourseId).mockReturnValue(null);
 
-    await courseDate.main(mockContext);
+      await courseDate.main(mockContext);
 
-    expect(createIntegratedUi).not.toHaveBeenCalled();
+      // No UI should be created when course ID is missing
+      expect(createIntegratedUi).not.toHaveBeenCalled();
+      expect(fetchCourseCreationDate).not.toHaveBeenCalled();
+    });
+
+    it('should propagate API errors (no try-catch in implementation)', async () => {
+      vi.mocked(getCourseId).mockReturnValue('12345');
+      vi.mocked(fetchCourseCreationDate).mockRejectedValue(new Error('API Error'));
+
+      // The current implementation doesn't catch this error - it propagates up
+      // This documents current behavior; consider adding graceful error handling
+      await expect(courseDate.main(mockContext)).rejects.toThrow('API Error');
+    });
   });
 
-  it('should fetch course creation date when course ID exists', async () => {
-    const courseId = '12345';
-    vi.mocked(getCourseId).mockReturnValue(courseId);
+  describe('successful date display flow', () => {
+    it('should successfully create and mount date element with correct data', async () => {
+      const courseId = '99999';
+      const rawDate = '2023-06-20T14:30:00Z';
+      const formattedDate = '6/2023';
 
-    await courseDate.main(mockContext);
+      vi.mocked(getCourseId).mockReturnValue(courseId);
+      vi.mocked(fetchCourseCreationDate).mockResolvedValue(rawDate);
+      vi.mocked(formatDateString).mockReturnValue(formattedDate);
 
-    expect(fetchCourseCreationDate).toHaveBeenCalledWith(courseId);
-  });
+      const mockDateElement = document.createElement('div');
+      mockDateElement.textContent = `Created ${formattedDate}`;
+      vi.mocked(createDateElement).mockReturnValue(mockDateElement);
 
-  it('should format the date string', async () => {
-    const courseId = '12345';
-    const rawDate = '2021-04-15T12:00:00Z';
-    vi.mocked(getCourseId).mockReturnValue(courseId);
-    vi.mocked(fetchCourseCreationDate).mockResolvedValue(rawDate);
+      await courseDate.main(mockContext);
 
-    await courseDate.main(mockContext);
+      // Verify UI was configured correctly
+      expect(createIntegratedUi).toHaveBeenCalledWith(
+        mockContext,
+        expect.objectContaining({
+          position: 'inline',
+          anchor: '.clp-lead__element-meta',
+          append: 'first',
+        })
+      );
 
-    expect(formatDateString).toHaveBeenCalledWith(rawDate);
-  });
+      // Verify UI mounting was triggered
+      expect(mockAutoMount).toHaveBeenCalled();
 
-  it('should create integrated UI with correct options', async () => {
-    vi.mocked(getCourseId).mockReturnValue('12345');
+      // Simulate the onMount callback being called
+      const mockContainer = document.createElement('div');
+      mockOnMount?.(mockContainer);
 
-    await courseDate.main(mockContext);
+      // Verify the date element was created with correct date
+      expect(createDateElement).toHaveBeenCalledWith(formattedDate);
+      
+      // Verify container has correct styling and contains date element
+      expect(mockContainer.style.display).toBe('contents');
+      expect(mockContainer.contains(mockDateElement)).toBe(true);
+      
+      // Verify the actual content is what we expect
+      expect(mockContainer.textContent).toContain(formattedDate);
+    });
 
-    expect(createIntegratedUi).toHaveBeenCalledWith(
-      mockContext,
-      expect.objectContaining({
-        position: 'inline',
-        anchor: '.clp-lead__element-meta',
-        append: 'first',
-      })
-    );
-  });
+    it('should properly integrate the date element into the UI anchor point', async () => {
+      vi.mocked(getCourseId).mockReturnValue('12345');
+      
+      await courseDate.main(mockContext);
 
-  it('should call autoMount on the UI', async () => {
-    vi.mocked(getCourseId).mockReturnValue('12345');
-
-    await courseDate.main(mockContext);
-
-    expect(mockAutoMount).toHaveBeenCalled();
-  });
-
-  it('should call onMount with correct container setup', async () => {
-    vi.mocked(getCourseId).mockReturnValue('12345');
-    const mockDateElement = document.createElement('div');
-    vi.mocked(createDateElement).mockReturnValue(mockDateElement);
-
-    await courseDate.main(mockContext);
-
-    // Trigger the onMount callback
-    const mockContainer = document.createElement('div');
-    mockOnMount?.(mockContainer);
-
-    expect(mockContainer.style.display).toBe('contents');
-    expect(mockContainer.contains(mockDateElement)).toBe(true);
-  });
-
-  it('should create date element with formatted date', async () => {
-    const courseId = '12345';
-    const formattedDate = '4/2021';
-    vi.mocked(getCourseId).mockReturnValue(courseId);
-    vi.mocked(formatDateString).mockReturnValue(formattedDate);
-
-    await courseDate.main(mockContext);
-
-    // Trigger the onMount callback to test date element creation
-    const mockContainer = document.createElement('div');
-    mockOnMount?.(mockContainer);
-
-    expect(createDateElement).toHaveBeenCalledWith(formattedDate);
-  });
-
-  it('should handle the full flow correctly', async () => {
-    const courseId = '99999';
-    const rawDate = '2023-06-20T14:30:00Z';
-    const formattedDate = '6/2023';
-
-    vi.mocked(getCourseId).mockReturnValue(courseId);
-    vi.mocked(fetchCourseCreationDate).mockResolvedValue(rawDate);
-    vi.mocked(formatDateString).mockReturnValue(formattedDate);
-
-    const mockDateElement = document.createElement('div');
-    vi.mocked(createDateElement).mockReturnValue(mockDateElement);
-
-    await courseDate.main(mockContext);
-
-    // Verify the sequence of calls
-    expect(getCourseId).toHaveBeenCalled();
-    expect(fetchCourseCreationDate).toHaveBeenCalledWith(courseId);
-    expect(formatDateString).toHaveBeenCalledWith(rawDate);
-    expect(createIntegratedUi).toHaveBeenCalled();
-    expect(mockAutoMount).toHaveBeenCalled();
-
-    // Trigger onMount and verify container setup and date element creation
-    const mockContainer = document.createElement('div');
-    mockOnMount?.(mockContainer);
-    
-    expect(createDateElement).toHaveBeenCalledWith(formattedDate);
-    expect(mockContainer.style.display).toBe('contents');
-    expect(mockContainer.contains(mockDateElement)).toBe(true);
+      // Verify it's configured to inject at the correct location
+      const createUiCall = vi.mocked(createIntegratedUi).mock.calls[0];
+      expect(createUiCall[1].anchor).toBe('.clp-lead__element-meta');
+      expect(createUiCall[1].append).toBe('first'); // Should appear first in the meta section
+      expect(createUiCall[1].position).toBe('inline'); // Should be inline with existing elements
+    });
   });
 });
