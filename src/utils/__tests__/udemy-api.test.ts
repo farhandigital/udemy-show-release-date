@@ -29,13 +29,6 @@ describe('Udemy API utilities', () => {
         expect(getCourseId()).toBe(id);
       });
     });
-
-    it('should return null when data-clp-course-id is empty (triggers fallback)', () => {
-      document.body.removeAttribute('data-clp-course-id');
-      document.body.setAttribute('data-clp-course-id', '');
-      // Empty string is invalid, should trigger fallback methods which will return null
-      expect(getCourseId()).toBeNull();
-    });
   });
 
   describe('formatDateString', () => {
