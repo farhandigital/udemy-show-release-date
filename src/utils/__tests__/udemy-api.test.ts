@@ -30,10 +30,11 @@ describe('Udemy API utilities', () => {
       });
     });
 
-    it('should return empty string when data-clp-course-id is empty', () => {
+    it('should return null when data-clp-course-id is empty (triggers fallback)', () => {
       document.body.removeAttribute('data-clp-course-id');
       document.body.setAttribute('data-clp-course-id', '');
-      expect(getCourseId()).toBe('');
+      // Empty string is invalid, should trigger fallback methods which will return null
+      expect(getCourseId()).toBeNull();
     });
   });
 
