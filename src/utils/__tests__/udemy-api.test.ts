@@ -1,72 +1,94 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { fetchCourseCreationDate, getCourseId, formatDateString, fetchCurriculumItems } from '../udemy-api';
+import { fetchCourseCreationDate, formatDateString, fetchCurriculumItems, getCourseId } from '../udemy-api';
 
 describe('Udemy API utilities', () => {
   beforeEach(() => {
-    // Clear the DOM before each test
-    document.body.innerHTML = '';
-    // Clear all mocks
     vi.clearAllMocks();
+    document.body.innerHTML = '';
+    document.body.removeAttribute('data-clp-course-id');
   });
 
   describe('getCourseId', () => {
-    it('should return the course ID from data-clp-course-id attribute', () => {
+    it('should return null when no extraction method succeeds', () => {
+      // Empty DOM with no course ID markers
+      expect(getCourseId()).toBeNull();
+    });
+
+    it('should extract from data-clp-course-id attribute (Method 1)', () => {
       document.body.setAttribute('data-clp-course-id', '12345');
       expect(getCourseId()).toBe('12345');
     });
 
-    it('should return null when data-clp-course-id is not set', () => {
-      document.body.removeAttribute('data-clp-course-id');
+    it('should extract from report-abuse link (Method 2)', () => {
+      const link = document.createElement('a');
+      link.setAttribute('data-purpose', 'report-abuse-link');
+      link.href = 'https://example.com/report?related_object_id=67890';
+      document.body.appendChild(link);
+      
+      expect(getCourseId()).toBe('67890');
+    });
+
+    it('should extract from JSON-LD structured data (Method 3)', () => {
+      const script = document.createElement('script');
+      script.type = 'application/ld+json';
+      script.setAttribute('data-purpose', 'safely-set-inner-html:course-landing-page/seo-info');
+      script.textContent = JSON.stringify({
+        '@graph': [{
+          '@type': 'Course',
+          image: 'https://img-c.udemycdn.com/course/480x270/2015076_2944_8.jpg'
+        }]
+      });
+      document.body.appendChild(script);
+      
+      expect(getCourseId()).toBe('2015076');
+    });
+
+    it('should return null when JSON-LD is malformed', () => {
+      const script = document.createElement('script');
+      script.type = 'application/ld+json';
+      script.setAttribute('data-purpose', 'safely-set-inner-html:course-landing-page/seo-info');
+      script.textContent = 'not valid json';
+      document.body.appendChild(script);
+      
       expect(getCourseId()).toBeNull();
     });
 
-    it('should return the correct ID for different course IDs', () => {
-      const courseIds = ['1', '999', '4567890'];
-
-      courseIds.forEach((id) => {
-        document.body.removeAttribute('data-clp-course-id');
-        document.body.setAttribute('data-clp-course-id', id);
-        expect(getCourseId()).toBe(id);
-      });
+    it('should prioritize methods in order (Method 1 before Method 2)', () => {
+      // Set up both methods
+      document.body.setAttribute('data-clp-course-id', '11111');
+      const link = document.createElement('a');
+      link.setAttribute('data-purpose', 'report-abuse-link');
+      link.href = 'https://example.com/report?related_object_id=22222';
+      document.body.appendChild(link);
+      
+      // Method 1 should win
+      expect(getCourseId()).toBe('11111');
     });
   });
 
   describe('formatDateString', () => {
-    it('should format ISO date string correctly', () => {
-      const result = formatDateString('2021-04-15T12:00:00Z');
-      expect(result).toBe('4/2021');
+    it('should handle month edge cases correctly', () => {
+      // January (month 0 in JS)
+      expect(formatDateString('2020-01-01T00:00:00Z')).toBe('1/2020');
+      
+      // December (month 11 in JS)
+      expect(formatDateString('2023-12-15T12:00:00Z')).toBe('12/2023');
     });
 
-    it('should handle January correctly (month 0)', () => {
-      const result = formatDateString('2020-01-01T00:00:00Z');
-      expect(result).toBe('1/2020');
-    });
-
-    it('should handle December correctly (month 11)', () => {
-      const result = formatDateString('2023-12-15T12:00:00Z');
-      expect(result).toBe('12/2023');
-    });
-
-    it('should handle different years', () => {
-      const testCases = [
-        { input: '2015-06-20T00:00:00Z', expected: '6/2015' },
-        { input: '2020-02-15T00:00:00Z', expected: '2/2020' },
-        { input: '2030-09-10T00:00:00Z', expected: '9/2030' },
-      ];
-
-      testCases.forEach(({ input, expected }) => {
-        expect(formatDateString(input)).toBe(expected);
-      });
-    });
-
-    it('should handle dates without timezone', () => {
+    it('should handle dates without explicit timezone', () => {
+      // This may vary by system timezone, so we check it's reasonable
       const result = formatDateString('2021-04-15');
-      expect(result).toMatch(/4\/2021|3\/2021/); // May vary by timezone
+      expect(result).toMatch(/^(3|4)\/2021$/); // Could be March or April depending on timezone
+    });
+
+    it('should handle edge case years', () => {
+      expect(formatDateString('1970-06-15T00:00:00Z')).toBe('6/1970');
+      expect(formatDateString('2099-06-15T23:59:59Z')).toBe('6/2099');
     });
   });
 
   describe('fetchCourseCreationDate', () => {
-    it('should fetch course creation date successfully', async () => {
+    it('should handle successful API response', async () => {
       const mockResponse = { created: '2021-04-15T12:00:00Z' };
       global.fetch = vi.fn(() =>
         Promise.resolve({
@@ -75,102 +97,56 @@ describe('Udemy API utilities', () => {
       );
 
       const result = await fetchCourseCreationDate('12345');
-
       expect(result).toBe('2021-04-15T12:00:00Z');
-      expect(global.fetch).toHaveBeenCalledWith(
-        'https://www.udemy.com/api-2.0/courses/12345/?fields[course]=created',
-        {
-          headers: { Accept: 'application/json' },
-        }
-      );
     });
 
-    it('should call the correct API endpoint with the provided course ID', async () => {
-      const courseId = '98765';
+    it('should throw on network error', async () => {
+      global.fetch = vi.fn(() => Promise.reject(new Error('Network error')));
+
+      await expect(fetchCourseCreationDate('12345')).rejects.toThrow('Network error');
+    });
+
+    it('should handle malformed JSON response', async () => {
       global.fetch = vi.fn(() =>
         Promise.resolve({
-          json: () => Promise.resolve({ created: '2020-01-01T00:00:00Z' }),
+          json: () => Promise.reject(new Error('Invalid JSON')),
         } as Response)
       );
 
-      await fetchCourseCreationDate(courseId);
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining(`/courses/${courseId}/`),
-        expect.any(Object)
-      );
+      await expect(fetchCourseCreationDate('12345')).rejects.toThrow('Invalid JSON');
     });
 
-    it('should set the correct Accept header', async () => {
+    it('should handle response missing created field', async () => {
       global.fetch = vi.fn(() =>
         Promise.resolve({
-          json: () => Promise.resolve({ created: '2020-01-01T00:00:00Z' }),
+          json: () => Promise.resolve({}), // Missing 'created' field
         } as Response)
       );
 
-      await fetchCourseCreationDate('12345');
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.objectContaining({
-          headers: { Accept: 'application/json' },
-        })
-      );
+      const result = await fetchCourseCreationDate('12345');
+      expect(result).toBeUndefined();
     });
 
-    it('should handle different course IDs', async () => {
+    it('should construct correct API URL with course ID', async () => {
       global.fetch = vi.fn(() =>
         Promise.resolve({
           json: () => Promise.resolve({ created: '2021-04-15T12:00:00Z' }),
         } as Response)
       );
 
-      const courseIds = ['1', '999999', '54321'];
+      await fetchCourseCreationDate('99999');
 
-      for (const id of courseIds) {
-        await fetchCourseCreationDate(id);
-        expect(global.fetch).toHaveBeenCalledWith(
-          expect.stringContaining(`/courses/${id}/`),
-          expect.any(Object)
-        );
-      }
-    });
-
-    it('should handle API response with created field', async () => {
-      const mockDate = '2023-06-20T14:30:00Z';
-      global.fetch = vi.fn(() =>
-        Promise.resolve({
-          json: () => Promise.resolve({ created: mockDate }),
-        } as Response)
+      expect(global.fetch).toHaveBeenCalledWith(
+        'https://www.udemy.com/api-2.0/courses/99999/?fields[course]=created',
+        expect.objectContaining({
+          headers: { Accept: 'application/json' },
+        })
       );
-
-      const result = await fetchCourseCreationDate('12345');
-
-      expect(result).toBe(mockDate);
-    });
-
-    it('should reject on fetch error', async () => {
-      const error = new Error('Network error');
-      global.fetch = vi.fn(() => Promise.reject(error));
-
-      await expect(fetchCourseCreationDate('12345')).rejects.toThrow('Network error');
-    });
-
-    it('should handle JSON parsing', async () => {
-      const mockResponse = { created: '2021-04-15T12:00:00Z' };
-      global.fetch = vi.fn(() =>
-        Promise.resolve({
-          json: () => Promise.resolve(mockResponse),
-        } as Response)
-      );
-
-      const result = await fetchCourseCreationDate('12345');
-
-      expect(result).toBe(mockResponse.created);
     });
   });
+
   describe('fetchCurriculumItems', () => {
-    it('should fetch curriculum items and handle pagination', async () => {
+    it('should handle pagination correctly', async () => {
       const courseId = '12345';
       const page1Response = {
         count: 3,
@@ -185,12 +161,11 @@ describe('Udemy API utilities', () => {
         next: null,
         previous: '...',
         results: [
-          { _class: 'lecture', id: 2, title: 'L2', created: '2023-01-02', sort_order: 20 }, // Higher sort order
+          { _class: 'lecture', id: 2, title: 'L2', created: '2023-01-02', sort_order: 20 },
           { _class: 'quiz', id: 3, title: 'Q1', sort_order: 5 },
         ],
       };
 
-      // Mock fetch sequence
       global.fetch = vi.fn()
         .mockResolvedValueOnce({
           json: () => Promise.resolve(page1Response),
@@ -201,25 +176,43 @@ describe('Udemy API utilities', () => {
 
       const results = await fetchCurriculumItems(courseId);
 
-      // Verify URL calls
+      // Should have made 2 requests (pagination)
       expect(global.fetch).toHaveBeenCalledTimes(2);
-      expect(global.fetch).toHaveBeenNthCalledWith(1,
-        expect.stringContaining(`courses/${courseId}/subscriber-curriculum-items/`),
-        expect.any(Object)
-      );
+      
+      // Should follow the 'next' URL
       expect(global.fetch).toHaveBeenNthCalledWith(2,
         'https://www.udemy.com/api-2.0/test-next',
         expect.any(Object)
       );
 
-      // Verify sorting (Desc sort_order: 20 -> 10 -> 5)
+      // Should sort by sort_order descending: 20 -> 10 -> 5
       expect(results).toHaveLength(3);
       expect(results[0].id).toBe(2); // sort_order 20
       expect(results[1].id).toBe(1); // sort_order 10
       expect(results[2].id).toBe(3); // sort_order 5
     });
 
-    it('should include all required curriculum types in request', async () => {
+    it('should handle empty results', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        json: () => Promise.resolve({
+          count: 0,
+          next: null,
+          previous: null,
+          results: []
+        })
+      } as Response);
+
+      const results = await fetchCurriculumItems('12345');
+      expect(results).toEqual([]);
+    });
+
+    it('should throw on network error', async () => {
+      global.fetch = vi.fn(() => Promise.reject(new Error('Network failure')));
+
+      await expect(fetchCurriculumItems('12345')).rejects.toThrow('Network failure');
+    });
+
+    it('should request all curriculum types in the API call', async () => {
       global.fetch = vi.fn().mockResolvedValue({
         json: () => Promise.resolve({
           next: null,
@@ -229,13 +222,28 @@ describe('Udemy API utilities', () => {
 
       await fetchCurriculumItems('100');
 
-      // Check for curriculum_types parameter
-      // The implementation uses specific list: chapter,lecture,quiz,practice,asset
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('curriculum_types='),
-        expect.any(Object)
-      );
+      // Verify the URL includes curriculum_types parameter
+      const callUrl = (global.fetch as any).mock.calls[0][0];
+      expect(callUrl).toContain('curriculum_types=chapter,lecture,quiz,practice,asset');
+    });
+
+    it('should handle sorting with mixed sort_order values', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        json: () => Promise.resolve({
+          next: null,
+          results: [
+            { _class: 'lecture', id: 1, title: 'First', sort_order: 100 },
+            { _class: 'lecture', id: 2, title: 'Second', sort_order: 50 },
+            { _class: 'lecture', id: 3, title: 'Third', sort_order: 75 },
+            { _class: 'lecture', id: 4, title: 'Fourth', sort_order: 0 },
+          ]
+        })
+      } as Response);
+
+      const results = await fetchCurriculumItems('12345');
+      
+      // Should be sorted descending: 100 -> 75 -> 50 -> 0
+      expect(results.map(r => r.sort_order)).toEqual([100, 75, 50, 0]);
     });
   });
 });
-

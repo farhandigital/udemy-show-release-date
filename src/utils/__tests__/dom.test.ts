@@ -1,110 +1,80 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { createDateIcon, createDateElement, createLectureDateElement } from '../dom';
 
 describe('dom utilities', () => {
-  beforeEach(() => {
-    // Clear the DOM before each test
-    document.body.innerHTML = '';
-  });
-
   describe('createDateIcon', () => {
-    it('should create an SVG element with correct attributes', () => {
+    it('should create a properly structured SVG icon', () => {
       const svg = createDateIcon();
 
+      // Verify it's a valid SVG with accessibility attributes
       expect(svg).toBeInstanceOf(SVGSVGElement);
       expect(svg.getAttribute('aria-hidden')).toBe('true');
       expect(svg.getAttribute('focusable')).toBe('false');
-      expect(svg.getAttribute('class')).toContain('ud-icon');
-      expect(svg.getAttribute('class')).toContain('ud-icon-xsmall');
-      expect(svg.getAttribute('class')).toContain('ud-icon-color-neutral');
-      expect(svg.getAttribute('class')).toContain('last-update-date__icon');
-    });
-
-    it('should contain a use element with correct xlink:href', () => {
-      const svg = createDateIcon();
+      
+      // Verify icon reference (the actual valuable assertion)
       const useElement = svg.querySelector('use');
-
-      expect(useElement).toBeTruthy();
-      expect(useElement?.getAttributeNS('http://www.w3.org/1999/xlink', 'href')).toBe(
-        '#icon-new'
-      );
+      expect(useElement?.getAttributeNS('http://www.w3.org/1999/xlink', 'href')).toBe('#icon-new');
     });
 
-    it('should have the use element as a child of the SVG', () => {
+    it('should apply Udemy design system classes', () => {
       const svg = createDateIcon();
-      expect(svg.children.length).toBe(1);
-      expect(svg.children[0].tagName.toLowerCase()).toBe('use');
+      const classes = svg.getAttribute('class') ?? '';
+      
+      // These classes are critical for visual integration with Udemy's UI
+      expect(classes).toContain('ud-icon');
+      expect(classes).toContain('ud-icon-xsmall');
+      expect(classes).toContain('ud-icon-color-neutral');
+      expect(classes).toContain('last-update-date__icon');
     });
   });
 
   describe('createDateElement', () => {
-    it('should create a wrapper div with correct class', () => {
-      const element = createDateElement('4/2021');
-
-      expect(element).toBeInstanceOf(HTMLDivElement);
-      expect(element.className).toBe('clp-lead__element-item');
-    });
-
-    it('should contain an inner content div with correct class', () => {
-      const element = createDateElement('4/2021');
-      const innerContent = element.querySelector('.last-update-date');
-
-      expect(innerContent).toBeTruthy();
-      expect(innerContent?.tagName.toLowerCase()).toBe('div');
-    });
-
-    it('should contain an SVG icon', () => {
-      const element = createDateElement('4/2021');
-      const svg = element.querySelector('svg');
-
-      expect(svg).toBeTruthy();
-      expect(svg?.getAttribute('aria-hidden')).toBe('true');
-    });
-
-    it('should contain a span with formatted text', () => {
+    it('should create a properly structured date element with correct content', () => {
       const dateString = '4/2021';
       const element = createDateElement(dateString);
-      const span = element.querySelector('span');
 
-      expect(span).toBeTruthy();
-      expect(span?.textContent).toBe(`Created ${dateString}`);
-    });
-
-    it('should have icon before text in the correct order', () => {
-      const element = createDateElement('4/2021');
+      // Verify structure
+      expect(element.className).toBe('clp-lead__element-item');
       const innerContent = element.querySelector('.last-update-date');
-      const children = innerContent?.children;
+      expect(innerContent).toBeTruthy();
 
+      // Verify content order: icon first, then text
+      const children = innerContent?.children;
       expect(children?.length).toBe(2);
       expect(children?.[0].tagName.toLowerCase()).toBe('svg');
       expect(children?.[1].tagName.toLowerCase()).toBe('span');
+
+      // Verify text formatting (the main behavior)
+      const span = element.querySelector('span');
+      expect(span?.textContent).toBe(`Created ${dateString}`);
     });
 
-    it('should handle different date formats', () => {
-      const testDates = ['1/2020', '12/2023', '6/2021'];
+    it('should properly format various date strings', () => {
+      const testCases = [
+        { input: '1/2020', expected: 'Created 1/2020' },
+        { input: '12/2023', expected: 'Created 12/2023' },
+        { input: '6/2021', expected: 'Created 6/2021' },
+      ];
 
-      testDates.forEach((date) => {
-        const element = createDateElement(date);
+      testCases.forEach(({ input, expected }) => {
+        const element = createDateElement(input);
         const span = element.querySelector('span');
-        expect(span?.textContent).toBe(`Created ${date}`);
+        expect(span?.textContent).toBe(expected);
       });
     });
   });
+
   describe('createLectureDateElement', () => {
-    it('should create a span element with correct classes', () => {
-      const el = createLectureDateElement('1/2023');
+    it('should create a properly styled and formatted lecture date element', () => {
+      const el = createLectureDateElement('7/2022');
+
+      // Verify it's the right type with right styling
       expect(el.tagName.toLowerCase()).toBe('span');
       expect(el.className).toBe('ud-text-xs ud-text-neutral');
-    });
-
-    it('should have correct text content', () => {
-      const el = createLectureDateElement('7/2022');
-      expect(el.textContent).toBe('(7/2022)');
-    });
-
-    it('should have margin style', () => {
-      const el = createLectureDateElement('1/2023');
       expect(el.style.marginRight).toBe('1rem');
+
+      // Verify text formatting (wrapped in parentheses)
+      expect(el.textContent).toBe('(7/2022)');
     });
   });
 });
