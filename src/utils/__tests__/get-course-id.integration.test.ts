@@ -10,6 +10,12 @@ import { getCourseId } from '../udemy-api';
  * 
  * This ensures our fallback extraction methods work with Udemy's 
  * current HTML structure and helps catch breaking changes early.
+ * 
+ * NOTE: Udemy serves different HTML versions (A/B testing or gradual rollout):
+ * - Legacy: Server-rendered with data-clp-course-id attribute on <body>
+ * - New: Next.js/React app without legacy attribute, relies on JSON-LD/image URLs
+ * 
+ * Set DEBUG_HTML=1 env var to save the fetched HTML for inspection.
  */
 
 const TEST_COURSE_URL = 'https://www.udemy.com/course/securityplus/';
@@ -23,6 +29,12 @@ describe('getCourseId Integration', () => {
     // Fetch real Udemy course page
     const response = await fetch(TEST_COURSE_URL);
     const html = await response.text();
+    
+    // Save the fetched HTML for debugging (optional - helps verify what HTML JSDOM sees)
+    if (process.env.DEBUG_HTML) {
+      const fs = await import('fs');
+      fs.writeFileSync('test-fetched.html', html, 'utf8');
+    }
     
     // Create JSDOM instance
     dom = new JSDOM(html, {
