@@ -68,11 +68,45 @@ export async function fetchCurriculumItems(courseId: string): Promise<Curriculum
 }
 
 /**
- * Gets the course ID from the page
+ * Gets the course ID from the page using multiple fallback methods
  * @returns The course ID or null if not found
  */
 export function getCourseId(): string | null {
-  return document.body.getAttribute('data-clp-course-id');
+  // Method 1: Try the legacy data-clp-course-id attribute
+  const bodyAttribute = document.body.getAttribute('data-clp-course-id');
+  if (bodyAttribute) return bodyAttribute;
+
+  // Method 2: Extract from report abuse link
+  const reportLink = document.querySelector<HTMLAnchorElement>('a[data-purpose="report-abuse-link"]');
+  if (reportLink?.href) {
+    const url = new URL(reportLink.href, window.location.origin);
+    const courseId = url.searchParams.get('related_object_id');
+    if (courseId) return courseId;
+  }
+
+  // Method 3: Extract from JSON-LD structured data
+  const jsonLdScript = document.querySelector<HTMLScriptElement>(
+    'script[type="application/ld+json"][data-purpose="safely-set-inner-html:course-landing-page/seo-info"]'
+  );
+  if (jsonLdScript?.textContent) {
+    try {
+      const data = JSON.parse(jsonLdScript.textContent);
+      const courseGraph = data['@graph']?.find((item: any) => item['@type'] === 'Course');
+      if (courseGraph?.image) {
+        // Extract course ID from image URL pattern: /course/480x270/2015076_2944_8.jpg
+        const match = courseGraph.image.match(/\/course\/\d+x\d+\/(\d+)_/);
+        if (match?.[1]) return match[1];
+      }
+    } catch {
+      // JSON parsing failed, continue to next method
+    }
+  }
+
+  // Method 4: Extract from URL path (less reliable as a last resort)
+  // This won't give us the numeric ID, but could be useful for debugging
+  // For now, we'll skip this as we need the numeric ID for the API
+
+  return null;
 }
 
 /**
