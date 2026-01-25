@@ -72,40 +72,65 @@ export async function fetchCurriculumItems(courseId: string): Promise<Curriculum
  * @returns The course ID or null if not found
  */
 export function getCourseId(): string | null {
+  console.log('Starting getCourseId search on:', window.location.href);
+  console.log('Document title:', document.title);
+
   // Method 1: Try the legacy data-clp-course-id attribute
   const bodyAttribute = document.body.getAttribute('data-clp-course-id');
-  if (bodyAttribute) return bodyAttribute;
+  console.log('Method 1 (body attribute):', bodyAttribute);
+  if (bodyAttribute) {
+    console.log('Found ID via Method 1:', bodyAttribute);
+    return bodyAttribute;
+  }
 
   // Method 2: Extract from report abuse link
   const reportLink = document.querySelector<HTMLAnchorElement>('a[data-purpose="report-abuse-link"]');
+  console.log('Method 2 (report link found):', !!reportLink, reportLink?.href);
   if (reportLink?.href) {
-    const url = new URL(reportLink.href, window.location.origin);
-    const courseId = url.searchParams.get('related_object_id');
-    if (courseId) return courseId;
+    try {
+      const url = new URL(reportLink.href, window.location.origin);
+      const courseId = url.searchParams.get('related_object_id');
+      console.log('Method 2 (extracted ID):', courseId);
+      if (courseId) {
+        console.log('Found ID via Method 2:', courseId);
+        return courseId;
+      }
+    } catch (e) {
+      console.error('Method 2 (URL parse error):', e);
+    }
   }
 
   // Method 3: Extract from JSON-LD structured data
   const jsonLdScript = document.querySelector<HTMLScriptElement>(
     'script[type="application/ld+json"][data-purpose="safely-set-inner-html:course-landing-page/seo-info"]'
   );
+  console.log('Method 3 (JSON-LD script found):', !!jsonLdScript);
   if (jsonLdScript?.textContent) {
     try {
       const data = JSON.parse(jsonLdScript.textContent);
       const courseGraph = data['@graph']?.find((item: any) => item['@type'] === 'Course');
+      console.log('Method 3 (Course graph found):', !!courseGraph);
       if (courseGraph?.image) {
         // Extract course ID from image URL pattern: /course/480x270/2015076_2944_8.jpg
+        console.log('Method 3 (Course image):', courseGraph.image);
         const match = courseGraph.image.match(/\/course\/\d+x\d+\/(\d+)_/);
-        if (match?.[1]) return match[1];
+        console.log('Method 3 (Image match):', match);
+        if (match?.[1]) {
+          console.log('Found ID via Method 3:', match[1]);
+          return match[1];
+        }
       }
-    } catch {
+    } catch (e) {
       // JSON parsing failed, continue to next method
+      console.error('Method 3 (JSON parse error):', e);
     }
   }
 
   // Method 4: Extract from URL path (less reliable as a last resort)
   // This won't give us the numeric ID, but could be useful for debugging
   // For now, we'll skip this as we need the numeric ID for the API
-
+  
+  console.warn('All methods failed to find course ID');
   return null;
 }
 
