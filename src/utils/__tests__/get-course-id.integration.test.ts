@@ -40,7 +40,7 @@ describe('getCourseId Integration', () => {
     global.document = originalDocument;
   });
 
-  it('should extract course ID from real Udemy HTML', () => {
+  it('should extract a known course ID from a real Udemy HTML', () => {
     const courseId = getCourseId();
     expect(courseId).toBe(EXPECTED_COURSE_ID);
   });
