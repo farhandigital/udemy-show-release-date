@@ -6,6 +6,7 @@ import {
     getDomItems,
     findCurriculumContainer,
 } from '../utils/dom';
+import { createDefensiveObserver } from '../utils/observer';
 
 export default defineContentScript({
     matches: ['*://www.udemy.com/course/*'],
@@ -23,21 +24,13 @@ export default defineContentScript({
 
         if (!lectures || lectures.length === 0) return;
 
-        // Debounce function for the observer
-        let timeout: ReturnType<typeof setTimeout>;
-        const runInjection = () => {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => {
+        createDefensiveObserver(
+            () => {
                 injectDates(lectures);
                 injectItemCountPerYear(lectures);
-            }, 100);
-        };
-
-        const observer = new MutationObserver(runInjection);
-        observer.observe(document.body, { childList: true, subtree: true });
-
-        // Initial run
-        runInjection();
+            },
+            { debounceMs: 100 },
+        );
     },
 });
 

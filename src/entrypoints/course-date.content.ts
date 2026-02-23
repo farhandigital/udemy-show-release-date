@@ -1,6 +1,7 @@
 import { defineContentScript } from '#imports';
 import { getCourseId, fetchCourseCreationDate, formatDateString } from '../utils/udemy-api';
 import { createDateElement } from '../utils/dom';
+import { createDefensiveObserver } from '../utils/observer';
 
 const ANCHOR_SELECTOR = '[class*="last-updated-languages-container"]';
 const DATE_ELEMENT_ID = 'udemy-course-creation-date';
@@ -31,18 +32,7 @@ export default defineContentScript({
     }
 
     // Watch for the anchor to appear (initial load) and for our element to be removed
-    const observer = new MutationObserver(() => {
-      inject();
-    });
-
+    const observer = createDefensiveObserver(inject);
     ctx.addEventListener(window, 'beforeunload', () => observer.disconnect());
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-    });
-
-    // Try immediately in case the anchor is already there
-    inject();
   },
 });
