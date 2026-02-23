@@ -33,6 +33,6 @@ export default defineContentScript({
 
     // Watch for the anchor to appear (initial load) and for our element to be removed
     const observer = createDefensiveObserver(inject);
-    ctx.addEventListener(window, 'beforeunload', () => observer.disconnect());
+    ctx.onInvalidated(() => observer.disconnect());
   },
 });

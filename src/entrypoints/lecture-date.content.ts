@@ -10,7 +10,7 @@ import { createDefensiveObserver } from '../utils/observer';
 
 export default defineContentScript({
     matches: ['*://www.udemy.com/course/*'],
-    async main() {
+    async main(ctx) {
         const courseId = getCourseId();
         if (!courseId) return;
 
@@ -24,13 +24,14 @@ export default defineContentScript({
 
         if (!lectures || lectures.length === 0) return;
 
-        createDefensiveObserver(
+        const observer = createDefensiveObserver(
             () => {
                 injectDates(lectures);
                 injectItemCountPerYear(lectures);
             },
             { debounceMs: 100 },
         );
+        ctx.onInvalidated(() => observer.disconnect());
     },
 });
 
