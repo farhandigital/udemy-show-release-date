@@ -21,7 +21,10 @@ export default defineContentScript({
         let timeout: ReturnType<typeof setTimeout>;
         const runInjection = () => {
             clearTimeout(timeout);
-            timeout = setTimeout(() => injectDates(lectures), 100);
+            timeout = setTimeout(() => {
+                injectDates(lectures);
+                injectItemCountPerYear(lectures);
+            }, 100);
         };
 
         const observer = new MutationObserver(runInjection);
@@ -139,6 +142,27 @@ function injectDateIntoElement(element: HTMLElement, apiItem: CurriculumItem): v
 }
 
 // ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Counts how many curriculum items were created in every year */
+function countItemsByYear(items: CurriculumItem[]): Map<number, number> {
+    const counts = new Map<number, number>();
+    for (const item of items) {
+        if (!item.created) continue;
+        const itemYear = new Date(item.created).getFullYear();
+        counts.set(itemYear, (counts.get(itemYear) || 0) + 1);
+    }
+    return counts;
+}
+
+// find curriculum container
+function findCurriculumContainer(): HTMLElement | null {
+    const selector = '[data-testid="curriculum-stats"]';
+    return document.querySelector(selector);
+}
+
+// ---------------------------------------------------------------------------
 // Orchestrator
 // ---------------------------------------------------------------------------
 
@@ -150,4 +174,24 @@ function injectDates(allCurriculumItems: CurriculumItem[]): void {
     for (const { element, apiItem } of matched) {
         injectDateIntoElement(element, apiItem);
     }
+}
+
+function injectItemCountPerYear(allCurriculumItems: CurriculumItem[]): void {
+    const counts = countItemsByYear(allCurriculumItems);
+    const container = findCurriculumContainer();
+    if (!container) return;
+    // skip if already injected
+    const identifier = 'WSRD-lecture-counts';
+    if (container.querySelector(`.${identifier}`)) return;
+
+    const countEl = document.createElement('div');
+    countEl.textContent = 'Lectures by year: ' + Array.from(counts.entries())
+        .sort((a, b) => a[0] - b[0])
+        .map(([year, count]) => `${year}: ${count}`)
+        .join(', ');
+
+
+    countEl.className = identifier;
+    container.appendChild(countEl);
+    console.log('Lecture counts by year:', counts);
 }
