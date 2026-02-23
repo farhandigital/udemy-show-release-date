@@ -1,5 +1,11 @@
 import { getCourseId, fetchCurriculumItems, formatDateString, CurriculumItem } from '../utils/udemy-api';
-import { createLectureDateElement } from '../utils/dom';
+import {
+    DomItem,
+    createLectureDateElement,
+    createYearCountWidget,
+    getDomItems,
+    findCurriculumContainer,
+} from '../utils/dom';
 
 export default defineContentScript({
     matches: ['*://www.udemy.com/course/*'],
@@ -39,11 +45,6 @@ export default defineContentScript({
 // Types
 // ---------------------------------------------------------------------------
 
-interface DomItem {
-    element: HTMLElement;
-    title: string;
-}
-
 export interface MatchedItem {
     element: HTMLElement;
     apiItem: CurriculumItem;
@@ -56,22 +57,6 @@ export interface MatchedItem {
 /** Strip chapters — they don't appear as injectable DOM rows */
 function getContentItems(items: CurriculumItem[]): CurriculumItem[] {
     return items.filter(item => item._class !== 'chapter');
-}
-
-// ---------------------------------------------------------------------------
-// DOM querying
-// ---------------------------------------------------------------------------
-
-/** Collect all visible curriculum-item rows from the current DOM snapshot */
-function getDomItems(): DomItem[] {
-    // CSS-module class names contain "__course-lecture-title" as the BEM element suffix
-    const titleElements = document.querySelectorAll('[class*="__course-lecture-title"]');
-    return Array.from(titleElements)
-        .map(titleEl => ({
-            element: titleEl.closest('.ud-block-list-item') as HTMLElement,
-            title: titleEl.textContent?.trim() ?? '',
-        }))
-        .filter(item => item.element !== null);
 }
 
 // ---------------------------------------------------------------------------
@@ -156,14 +141,8 @@ function countItemsByYear(items: CurriculumItem[]): Map<number, number> {
     return counts;
 }
 
-// find curriculum container
-function findCurriculumContainer(): HTMLElement | null {
-    const selector = '[data-testid="curriculum-stats"]';
-    return document.querySelector(selector);
-}
-
 // ---------------------------------------------------------------------------
-// Orchestrator
+// Orchestrators
 // ---------------------------------------------------------------------------
 
 function injectDates(allCurriculumItems: CurriculumItem[]): void {
@@ -177,109 +156,15 @@ function injectDates(allCurriculumItems: CurriculumItem[]): void {
 }
 
 function injectItemCountPerYear(allCurriculumItems: CurriculumItem[]): void {
-    const counts = countItemsByYear(allCurriculumItems);
     const container = findCurriculumContainer();
     if (!container) return;
-    // skip if already injected
+
     const identifier = 'WSRD-lecture-counts';
     if (container.querySelector(`.${identifier}`)) return;
 
-    const countEl = document.createElement('div');
-    countEl.className = identifier;
+    const counts = countItemsByYear(allCurriculumItems);
+    const widget = createYearCountWidget(counts, identifier);
+    container.appendChild(widget);
 
-    // Add styles
-    const style = document.createElement('style');
-    style.textContent = `
-        .${identifier} {
-            margin-top: 12px;
-            margin-bottom: 12px;
-            font-size: 13px;
-            color: #333;
-        }
-        .${identifier}-title {
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #444;
-        }
-        .${identifier}-chart {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .${identifier}-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .${identifier}-year {
-            min-width: 50px;
-            font-weight: 500;
-            color: #555;
-        }
-        .${identifier}-bar-wrapper {
-            flex: 1;
-            height: 20px;
-            background: #f0f0f0;
-            border-radius: 3px;
-            overflow: hidden;
-        }
-        .${identifier}-bar {
-            height: 100%;
-            background: linear-gradient(90deg, #0a84ff 0%, #0066cc 100%);
-            border-radius: 3px;
-            transition: width 0.3s ease;
-        }
-        .${identifier}-count {
-            min-width: 30px;
-            text-align: right;
-            font-weight: 500;
-            color: #666;
-        }
-    `;
-    document.head.appendChild(style);
-
-    // Create chart
-    const title = document.createElement('div');
-    title.className = `${identifier}-title`;
-    title.textContent = 'Lectures by Year';
-    countEl.appendChild(title);
-
-    const chart = document.createElement('div');
-    chart.className = `${identifier}-chart`;
-
-    const sortedEntries = Array.from(counts.entries()).sort((a, b) => a[0] - b[0]);
-    const maxCount = Math.max(...sortedEntries.map(([, count]) => count));
-
-    for (const [year, count] of sortedEntries) {
-        const barPercentage = (count / maxCount) * 100;
-
-        const row = document.createElement('div');
-        row.className = `${identifier}-row`;
-
-        const yearLabel = document.createElement('div');
-        yearLabel.className = `${identifier}-year`;
-        yearLabel.textContent = String(year);
-
-        const barWrapper = document.createElement('div');
-        barWrapper.className = `${identifier}-bar-wrapper`;
-
-        const bar = document.createElement('div');
-        bar.className = `${identifier}-bar`;
-        bar.style.width = `${barPercentage}%`;
-
-        barWrapper.appendChild(bar);
-
-        const countLabel = document.createElement('div');
-        countLabel.className = `${identifier}-count`;
-        countLabel.textContent = String(count);
-
-        row.appendChild(yearLabel);
-        row.appendChild(barWrapper);
-        row.appendChild(countLabel);
-        chart.appendChild(row);
-    }
-
-    countEl.appendChild(chart);
-    container.appendChild(countEl);
     console.log('Lecture counts by year:', counts);
 }
